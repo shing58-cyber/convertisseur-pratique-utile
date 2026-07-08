@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Convertisseur Rapide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F5F1;
+    --ink:#12211D;
+    --teal:#1E6E63;
+    --teal-deep:#154F47;
+    --amber:#C98A2C;
+    --gray:#6E7770;
+    --card:#FFFFFF;
+    --line:rgba(18,33,29,0.10);
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Manrope', sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .card{
+    width:100%; max-width:440px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:32px;
+  }
+  .head{ margin-bottom:24px; }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; letter-spacing:0.12em; text-transform:uppercase;
+    color:var(--teal); margin-bottom:8px; display:block;
+  }
+  h1{ font-size:24px; font-weight:800; letter-spacing:-0.01em; }
+
+  /* tabs — signature element */
+  .tabs{
+    display:flex; position:relative;
+    border-bottom:1px solid var(--line);
+    margin:24px 0 28px;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .tabs::-webkit-scrollbar{ display:none; }
+  .tab{
+    flex:0 0 auto; background:none; border:none; cursor:pointer;
+    font-family:'Manrope', sans-serif; font-weight:700; font-size:13px;
+    color:var(--gray); padding:0 14px 12px 0; position:relative;
+    white-space:nowrap;
+  }
+  .tab.active{ color:var(--ink); }
+  .tab-indicator{
+    position:absolute; bottom:-1px; height:2px; background:var(--teal);
+    transition: left .25s ease, width .25s ease;
+  }
+
+  .field{ margin-bottom:16px; }
+  label{ font-size:12px; color:var(--gray); display:block; margin-bottom:6px; font-weight:600; }
+  select, input[type=number]{
+    width:100%; padding:13px 14px; border:1px solid var(--line); border-radius:4px;
+    font-family:'IBM Plex Mono', monospace; font-size:15px; font-weight:500;
+    background:#fbfbf9; color:var(--ink);
+  }
+  select:focus, input:focus{ outline:2px solid var(--teal); outline-offset:1px; }
+
+  .swap-row{ display:flex; align-items:center; gap:10px; margin:14px 0; }
+  .swap-btn{
+    background:var(--bg); border:1px solid var(--line); border-radius:4px;
+    width:34px; height:34px; cursor:pointer; font-size:15px; color:var(--teal);
+    flex-shrink:0;
+  }
+  .swap-btn:hover{ border-color:var(--teal); }
+
+  .result{
+    margin-top:24px; padding:20px; background:var(--teal); border-radius:5px;
+    color:#fff;
+  }
+  .result-label{ font-size:11px; letter-spacing:0.08em; text-transform:uppercase; opacity:0.8; font-family:'IBM Plex Mono', monospace; }
+  .result-value{
+    font-family:'IBM Plex Mono', monospace; font-size:30px; font-weight:600;
+    margin-top:6px; word-break:break-word;
+  }
+  .rate-note{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--gray);
+    margin-top:14px; text-align:right;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="head">
+    <span class="eyebrow">Outil du quotidien</span>
+    <h1>Convertisseur Rapide</h1>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="temp">Température</button>
+    <button class="tab" data-tab="devise">Devise</button>
+    <button class="tab" data-tab="longueur">Longueur</button>
+    <button class="tab" data-tab="poids">Poids</button>
+    <button class="tab" data-tab="surface">Surface</button>
+    <div class="tab-indicator" id="indicator"></div>
+  </div>
+
+  <!-- Temperature -->
+  <div class="panel" id="panel-temp">
+    <div class="field">
+      <label>Valeur</label>
+      <input type="number" id="temp-value" value="0" step="any">
+    </div>
+    <div class="swap-row">
+      <div class="field" style="flex:1; margin:0;">
+        <label>De</label>
+        <select id="temp-from">
+          <option value="C">Celsius (°C)</option>
+          <option value="F">Fahrenheit (°F)</option>
+          <option value="K">Kelvin (K)</option>
+        </select>
+      </div>
+      <button class="swap-btn" onclick="swapUnits('temp')">⇄</button>
+      <div class="field" style="flex:1; margin:0;">
+        <label>Vers</label>
+        <select id="temp-to">
+          <option value="F">Fahrenheit (°F)</option>
+          <option value="C">Celsius (°C)</option>
+          <option value="K">Kelvin (K)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Devise -->
+  <div class="panel" id="panel-devise" style="display:none;">
+    <div class="field">
+      <label>Montant</label>
+      <input type="number" id="devise-value" value="0" step="any">
+    </div>
+    <div class="swap-row">
+      <div class="field" style="flex:1; margin:0;">
+        <label>De</label>
+        <select id="devise-from">
+          <option value="HTG">Gourde (HTG)</option>
+          <option value="USD">Dollar US (USD)</option>
+        </select>
+      </div>
+      <button class="swap-btn" onclick="swapUnits('devise')">⇄</button>
+      <div class="field" style="flex:1; margin:0;">
+        <label>Vers</label>
+        <select id="devise-to">
+          <option value="USD">Dollar US (USD)</option>
+          <option value="HTG">Gourde (HTG)</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Taux (HTG pour 1 USD)</label>
+      <input type="number" id="devise-rate" value="132" step="any">
+    </div>
+  </div>
+
+  <!-- Longueur -->
+  <div class="panel" id="panel-longueur" style="display:none;">
+    <div class="field">
+      <label>Valeur</label>
+      <input type="number" id="long-value" value="0" step="any">
+    </div>
+    <div class="swap-row">
+      <div class="field" style="flex:1; margin:0;">
+        <label>De</label>
+        <select id="long-from">
+          <option value="m">Mètres (m)</option>
+          <option value="km">Kilomètres (km)</option>
+          <option value="cm">Centimètres (cm)</option>
+          <option value="mi">Miles (mi)</option>
+          <option value="ft">Pieds (ft)</option>
+        </select>
+      </div>
+      <button class="swap-btn" onclick="swapUnits('longueur')">⇄</button>
+      <div class="field" style="flex:1; margin:0;">
+        <label>Vers</label>
+        <select id="long-to">
+          <option value="km">Kilomètres (km)</option>
+          <option value="m">Mètres (m)</option>
+          <option value="cm">Centimètres (cm)</option>
+          <option value="mi">Miles (mi)</option>
+          <option value="ft">Pieds (ft)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Poids -->
+  <div class="panel" id="panel-poids" style="display:none;">
+    <div class="field">
+      <label>Valeur</label>
+      <input type="number" id="poids-value" value="0" step="any">
+    </div>
+    <div class="swap-row">
+      <div class="field" style="flex:1; margin:0;">
+        <label>De</label>
+        <select id="poids-from">
+          <option value="kg">Kilogrammes (kg)</option>
+          <option value="g">Grammes (g)</option>
+          <option value="lb">Livres (lb)</option>
+          <option value="oz">Onces (oz)</option>
+          <option value="mg">Milligrammes (mg)</option>
+        </select>
+      </div>
+      <button class="swap-btn" onclick="swapUnits('poids')">⇄</button>
+      <div class="field" style="flex:1; margin:0;">
+        <label>Vers</label>
+        <select id="poids-to">
+          <option value="lb">Livres (lb)</option>
+          <option value="kg">Kilogrammes (kg)</option>
+          <option value="g">Grammes (g)</option>
+          <option value="oz">Onces (oz)</option>
+          <option value="mg">Milligrammes (mg)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Surface / mesures agraires -->
+  <div class="panel" id="panel-surface" style="display:none;">
+    <div class="field">
+      <label>Valeur</label>
+      <input type="number" id="surface-value" value="0" step="any">
+    </div>
+    <div class="swap-row">
+      <div class="field" style="flex:1; margin:0;">
+        <label>De</label>
+        <select id="surface-from">
+          <option value="carreau">Carreau (kawo tè)</option>
+          <option value="m2">Mètres carrés (m²)</option>
+          <option value="hectare">Hectares (ha)</option>
+          <option value="centieme">Centième</option>
+          <option value="acre">Acres</option>
+        </select>
+      </div>
+      <button class="swap-btn" onclick="swapUnits('surface')">⇄</button>
+      <div class="field" style="flex:1; margin:0;">
+        <label>Vers</label>
+        <select id="surface-to">
+          <option value="hectare">Hectares (ha)</option>
+          <option value="carreau">Carreau (kawo tè)</option>
+          <option value="m2">Mètres carrés (m²)</option>
+          <option value="centieme">Centième</option>
+          <option value="acre">Acres</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="result">
+    <div class="result-label">Résultat</div>
+    <div class="result-value" id="result-value">—</div>
+  </div>
+  <div class="rate-note" id="rate-note"></div>
+</div>
+
+<script>
+  const tabs = document.querySelectorAll('.tab');
+  const indicator = document.getElementById('indicator');
+
+  function positionIndicator(tabEl){
+    indicator.style.left = tabEl.offsetLeft + 'px';
+    indicator.style.width = tabEl.offsetWidth + 'px';
+  }
+
+  const allTabs = ['temp', 'devise', 'longueur', 'poids', 'surface'];
+  function activateTab(name){
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    allTabs.forEach(tab => {
+      document.getElementById('panel-' + tab).style.display = (tab === name) ? 'block' : 'none';
+    });
+    positionIndicator([...tabs].find(t => t.dataset.tab === name));
+    compute();
+  }
+
+  tabs.forEach(t => t.addEventListener('click', () => activateTab(t.dataset.tab)));
+  window.addEventListener('load', () => positionIndicator(tabs[0]));
+  window.addEventListener('resize', () => {
+    const active = [...tabs].find(t => t.classList.contains('active'));
+    positionIndicator(active);
+  });
+
+  function swapUnits(kind){
+    const from = document.getElementById(kind + '-from');
+    const to = document.getElementById(kind + '-to');
+    const tmp = from.value; from.value = to.value; to.value = tmp;
+    compute();
+  }
+
+  function toCelsius(v, unit){
+    if(unit === 'C') return v;
+    if(unit === 'F') return (v - 32) * 5/9;
+    if(unit === 'K') return v - 273.15;
+  }
+  function fromCelsius(c, unit){
+    if(unit === 'C') return c;
+    if(unit === 'F') return c * 9/5 + 32;
+    if(unit === 'K') return c + 273.15;
+  }
+
+  const lengthToMeters = { m:1, km:1000, cm:0.01, mi:1609.344, ft:0.3048 };
+  const weightToGrams = { kg:1000, g:1, lb:453.592, oz:28.3495, mg:0.001 };
+  // 1 carreau (kawo tè) = 12 900 m² = 1.29 hectares — unité agraire traditionnelle haïtienne
+  const areaToSqMeters = { m2:1, hectare:10000, carreau:12900, centieme:129, acre:4046.86 };
+
+  function compute(){
+    const activeTab = [...tabs].find(t => t.classList.contains('active')).dataset.tab;
+    const resultEl = document.getElementById('result-value');
+    const rateNote = document.getElementById('rate-note');
+    rateNote.textContent = '';
+
+    if(activeTab === 'temp'){
+      const val = parseFloat(document.getElementById('temp-value').value) || 0;
+      const from = document.getElementById('temp-from').value;
+      const to = document.getElementById('temp-to').value;
+      const c = toCelsius(val, from);
+      const out = fromCelsius(c, to);
+      resultEl.textContent = out.toFixed(2) + ' ' + to;
+    }
+
+    if(activeTab === 'devise'){
+      const val = parseFloat(document.getElementById('devise-value').value) || 0;
+      const from = document.getElementById('devise-from').value;
+      const to = document.getElementById('devise-to').value;
+      const rate = parseFloat(document.getElementById('devise-rate').value) || 132;
+      let out;
+      if(from === to){ out = val; }
+      else if(from === 'USD' && to === 'HTG'){ out = val * rate; }
+      else if(from === 'HTG' && to === 'USD'){ out = val / rate; }
+      resultEl.textContent = out.toLocaleString('fr-FR', {maximumFractionDigits:2}) + ' ' + to;
+      rateNote.textContent = '1 USD ≈ ' + rate + ' HTG (taux modifiable)';
+    }
+
+    if(activeTab === 'longueur'){
+      const val = parseFloat(document.getElementById('long-value').value) || 0;
+      const from = document.getElementById('long-from').value;
+      const to = document.getElementById('long-to').value;
+      const meters = val * lengthToMeters[from];
+      const out = meters / lengthToMeters[to];
+      resultEl.textContent = out.toLocaleString('fr-FR', {maximumFractionDigits:4}) + ' ' + to;
+    }
+
+    if(activeTab === 'poids'){
+      const val = parseFloat(document.getElementById('poids-value').value) || 0;
+      const from = document.getElementById('poids-from').value;
+      const to = document.getElementById('poids-to').value;
+      const grams = val * weightToGrams[from];
+      const out = grams / weightToGrams[to];
+      resultEl.textContent = out.toLocaleString('fr-FR', {maximumFractionDigits:4}) + ' ' + to;
+    }
+
+    if(activeTab === 'surface'){
+      const val = parseFloat(document.getElementById('surface-value').value) || 0;
+      const from = document.getElementById('surface-from').value;
+      const to = document.getElementById('surface-to').value;
+      const sqMeters = val * areaToSqMeters[from];
+      const out = sqMeters / areaToSqMeters[to];
+      resultEl.textContent = out.toLocaleString('fr-FR', {maximumFractionDigits:4}) + ' ' + to;
+      if(from === 'carreau' || to === 'carreau'){
+        rateNote.textContent = '1 carreau (kawo tè) = 12 900 m² ≈ 1,29 hectare';
+      }
+    }
+  }
+
+  document.querySelectorAll('input, select').forEach(el => el.addEventListener('input', compute));
+  compute();
+</script>
+
+</body>
+</html>
